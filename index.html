@@ -584,7 +584,6 @@
             if (!airport) return;
             document.getElementById('destination').value = airport;
             document.getElementById('booking-section').scrollIntoView({ behavior: 'smooth' });
-            // Zoek adres voor de kaart
             searchAddress(airport, 'destination', true);
         }
 
@@ -688,13 +687,14 @@
             return total;
         }
 
+        // CORRECTED: generateBookingNumber with AP prefix for T5
         function generateBookingNumber() {
             const now = new Date();
             const dateStr = now.getFullYear().toString() +
                           (now.getMonth() + 1).toString().padStart(2, '0') +
                           now.getDate().toString().padStart(2, '0');
             const random = Math.floor(Math.random() * 9999) + 1;
-            return `H5-${dateStr}-${random.toString().padStart(4, '0')}`;
+            return `AP-${dateStr}-${random.toString().padStart(4, '0')}`;
         }
 
         function collectBookingData() {
@@ -706,7 +706,7 @@
             const paymentMethod = document.querySelector('input[name="payment-method"]:checked')?.value || 'cash';
 
             return {
-                template_code: "H5",
+                template_code: "T5",
                 booking_number: generateBookingNumber(),
                 booking_date: document.getElementById('booking-date').value,
                 booking_time: document.getElementById('booking-time').value,
@@ -722,7 +722,6 @@
                 vehicle_name: selectedVehicle ? selectedVehicle.name : 'Unknown',
                 passengers: selectedVehicle ? selectedVehicle.seats : 0,
 
-                // Airport Specific
                 flight_number: document.getElementById('flight-number').value,
                 waiting_minutes: parseInt(document.getElementById('waiting-time').value),
                 airport_code: document.getElementById('destination').value.match(/\((.*?)\)/)?.[1] || "BRU",
@@ -880,7 +879,6 @@
         async function handleFormSubmit(e) {
             e.preventDefault();
 
-            // Handmatige validatie voor stap 4
             const name = document.getElementById('customer-name').value;
             const email = document.getElementById('customer-email').value;
             const phone = document.getElementById('customer-phone').value;
@@ -894,7 +892,6 @@
 
             const bookingData = collectBookingData();
 
-            // Opslaan naar Supabase
             try {
                 const { data, error } = await supabaseClient
                     .from('bookings')
@@ -902,11 +899,13 @@
 
                 if (error) {
                     console.error('Supabase error:', error);
+                    alert('Fout bij opslaan: ' + error.message);
                 } else {
                     console.log('Booking saved to Supabase:', data);
                 }
             } catch (err) {
                 console.error('Network error:', err);
+                alert('Netwerkfout bij opslaan');
             }
 
             showBookingFiche(bookingData);
